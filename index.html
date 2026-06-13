@@ -93,6 +93,7 @@
   .foot{color:var(--muted);font-size:12px;text-align:center;padding:24px}
   /* modal */
   .modal{position:fixed;inset:0;background:rgba(4,7,16,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+  .modal[hidden]{display:none}
   .modalbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;width:560px;max-width:96vw;max-height:92vh;overflow:auto;padding:22px;box-shadow:var(--shadow);position:relative}
   .modalbox h3{margin:0 0 2px;font-size:18px}
   .mclose{position:absolute;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line);color:var(--txt);width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:15px}
@@ -234,8 +235,8 @@
   </div>
 </div>
 
-<script src="map.js?v=2"></script>
-<script src="payload.js?v=2"></script>
+<script src="map.js?v=3"></script>
+<script src="payload.js?v=3"></script>
 <script>
 // ---------- deszyfrowanie ----------
 function b64(b){const s=atob(b);const a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a;}
