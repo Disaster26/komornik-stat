@@ -69,6 +69,8 @@
   .tag{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;background:var(--panel2);border:1px solid var(--line)}
   .tag.hi{background:#2a1e0c;border-color:var(--hot1);color:var(--hot1)}
   .tablewrap{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:13px}
+  td.links{white-space:nowrap}
+  td.links a{display:inline-block;margin-right:8px;font-size:12px;padding:2px 7px;border:1px solid var(--line);border-radius:7px;background:var(--panel2)}
   .foot{color:var(--muted);font-size:12px;text-align:center;padding:22px}
   .pill{font-size:11px;color:var(--muted)}
 </style>
@@ -101,6 +103,11 @@
     </div>
 
     <div class="cards" id="cards"></div>
+
+    <div class="panel" style="margin-bottom:22px">
+      <h3>Analiza częstotliwości <span class="hint">— w bieżącym wyborze (filtry/zakres dat)</span></h3>
+      <div class="cards" id="freq" style="margin:0"></div>
+    </div>
 
     <div class="grid2">
       <div class="panel">
@@ -143,7 +150,8 @@
           <thead><tr>
             <th data-k="date">Data</th><th data-k="surname">Nazwisko</th>
             <th data-k="city">Miasto</th><th data-k="woj">Województwo</th>
-            <th data-k="court">Sąd</th><th>Ogłoszenie</th>
+            <th data-k="court">Sąd</th><th>Kancelaria / adres</th>
+            <th>Sprawdź</th><th>Ogłoszenie</th>
           </tr></thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -209,7 +217,8 @@ async function tryLogin(){
     POS=[];
     DATA.announcements.forEach(a=>(a.positions||[]).forEach(p=>POS.push({
       date:a.date, year:a.date.slice(0,4), ym:a.date.slice(0,7),
-      url:a.url, surname:p.surname, city:p.city, woj:p.woj, court:p.court
+      url:a.url, surname:p.surname, city:p.city, woj:p.woj, court:p.court,
+      kancelaria:p.kancelaria||'', address:p.address||''
     })));
     sessionStorage.setItem('kpw',pw);
     $('gate').style.display='none'; $('app').style.display='block';
@@ -279,6 +288,29 @@ function render(){
   ].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')
    +`<div class="card hot"><div class="k">Udział ★ łódzkie + mazowieckie</div><div class="v">${hiPct}%<small> (${hiCount})</small></div></div>`;
 
+  // analiza czestotliwosci
+  const annMap={}; F.forEach(p=>{(annMap[p.url]=annMap[p.url]||{date:p.date,c:0}).c++;});
+  const anns=Object.values(annMap);
+  const annCount=anns.length;
+  const counts=anns.map(a=>a.c).sort((a,b)=>a-b);
+  const med=counts.length?(counts.length%2?counts[(counts.length-1)/2]:((counts[counts.length/2-1]+counts[counts.length/2])/2)):0;
+  const avgPos=annCount?F.length/annCount:0;
+  const dts=[...new Set(anns.map(a=>a.date))].sort();
+  let interval='—',perMonth='—';
+  if(dts.length>=2){
+    const spanDays=Math.round((new Date(dts[dts.length-1])-new Date(dts[0]))/86400000);
+    interval='co '+(spanDays/(dts.length-1)).toFixed(0)+' dni';
+    perMonth=(F.length/Math.max(1,spanDays/30.44)).toFixed(1);
+  }
+  $('freq').innerHTML=[
+    ['Ogłoszeń w wyborze',annCount],
+    ['Stanowisk razem',F.length],
+    ['Śr. stanowisk / ogłoszenie',avgPos.toFixed(1)],
+    ['Mediana stanowisk / ogł.',med],
+    ['Średnio publikowano',interval],
+    ['Tempo',perMonth+'<small> stan./mies.</small>'],
+  ].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+
   // wg roku
   const byYear=Object.entries(countBy(F,'year')).sort();
   barChart($('chYear'),byYear);
@@ -324,11 +356,19 @@ function render(){
 
   // tabela
   const S=[...F].sort((a,b)=>{let x=a[sortK]||'',y=b[sortK]||'';return (x<y?-1:x>y?1:0)*(sortAsc?1:-1);});
-  $('tbody').innerHTML=S.map(p=>`<tr>`+
-    `<td>${p.date}</td><td><b>${esc(p.surname)}</b></td><td>${esc(p.city)}</td>`+
-    `<td><span class="tag ${HI.includes(p.woj)?'hi':''}">${p.woj}${HI.includes(p.woj)?' ★':''}</span></td>`+
-    `<td>${esc(p.court)}</td><td><a href="${p.url}" target="_blank">otwórz ↗</a></td></tr>`).join('');
-  $('tblHint').textContent=`— ${F.length} pozycji`;
+  $('tbody').innerHTML=S.map(p=>{
+    const q=encodeURIComponent(`komornik sądowy ${p.surname} ${p.city}`);
+    const maps=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`komornik ${p.surname} ${p.address?p.address+' ':''}${p.city}`)}`;
+    const goog=`https://www.google.com/search?q=${q}`;
+    const kan=(p.kancelaria?`<b>nr ${esc(p.kancelaria)}</b>`:'')+(p.address?`<div class="pill">${esc(p.address)}</div>`:'');
+    return `<tr>`+
+      `<td>${p.date}</td><td><b>${esc(p.surname)}</b></td><td>${esc(p.city)}</td>`+
+      `<td><span class="tag ${HI.includes(p.woj)?'hi':''}">${p.woj}${HI.includes(p.woj)?' ★':''}</span></td>`+
+      `<td>${esc(p.court)}</td><td>${kan||'<span class="pill">—</span>'}</td>`+
+      `<td class="links"><a href="${maps}" target="_blank" rel="noopener" title="Google Maps + opinie">🗺️ Maps</a> <a href="${goog}" target="_blank" rel="noopener" title="Wyszukaj w Google">🔍 Google</a></td>`+
+      `<td><a href="${p.url}" target="_blank" rel="noopener">ogłoszenie ↗</a></td></tr>`;
+  }).join('');
+  $('tblHint').textContent=`— ${F.length} pozycji · 🗺️/🔍 = wyszukiwarka na żywo (prawdziwe wizytówki/opinie)`;
   $('foot').innerHTML=`Dane: <a href="${DATA.source}" target="_blank">gov.pl / Ministerstwo Sprawiedliwości</a> · zaktualizowano ${DATA.generated} · zakres ${DATA.range.from} – ${DATA.range.to}`;
 }
 function esc(s){return (s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
