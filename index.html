@@ -91,6 +91,20 @@
   .statline{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--muted);font-size:13px;margin-bottom:16px}
   .statline b{color:var(--txt)}
   .foot{color:var(--muted);font-size:12px;text-align:center;padding:24px}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(4,7,16,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+  .modalbox{background:var(--panel);border:1px solid var(--line);border-radius:18px;width:560px;max-width:96vw;max-height:92vh;overflow:auto;padding:22px;box-shadow:var(--shadow);position:relative}
+  .modalbox h3{margin:0 0 2px;font-size:18px}
+  .mclose{position:absolute;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line);color:var(--txt);width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:15px}
+  #mmap{width:100%;height:300px;border:0;border-radius:12px;margin:6px 0 14px;background:var(--panel2)}
+  .mbtns{display:flex;flex-wrap:wrap;gap:8px}
+  .mbtns a,.mbtns button{display:inline-block;padding:9px 13px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:13px;cursor:pointer;text-decoration:none}
+  .mbtns a.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .stars{color:var(--gold);font-size:18px;letter-spacing:1px}
+  .review{border-top:1px solid var(--line);padding:10px 0;font-size:13px}
+  .review .rh{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:3px}
+  .reviews-note{background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--muted);margin-bottom:12px}
+  td .wbtn{display:inline-block;padding:2px 8px;border:1px solid var(--gold);color:var(--gold);border-radius:7px;font-size:12px;cursor:pointer;background:#241b0d}
 </style>
 </head>
 <body>
@@ -109,6 +123,10 @@
   <header class="top">
     <h1>⚖️ Wolne stanowiska komornika sądowego</h1>
     <span class="badge" id="rangeInfo"></span>
+    <span style="margin-left:auto;display:flex;gap:8px">
+      <button class="badge" id="apikeyBtn" title="Klucz Google API do opinii" style="cursor:pointer;background:none">⚙ opinie</button>
+      <button class="badge" id="logout" style="cursor:pointer;background:none">Wyloguj</button>
+    </span>
   </header>
   <div class="wrap">
     <div class="bar">
@@ -125,6 +143,7 @@
     <nav class="tabs">
       <button class="on" data-tab="mapa">🗺️ Mapa</button>
       <button data-tab="trendy">📈 Trendy</button>
+      <button data-tab="blisko">📍 W pobliżu</button>
       <button data-tab="lista">📋 Lista</button>
     </nav>
 
@@ -159,6 +178,30 @@
       </div>
     </section>
 
+    <section data-tab="blisko" hidden>
+      <div class="panel">
+        <h3>Najbliższe wolne stanowiska <span class="hint">— podaj miejscowość lub użyj swojej lokalizacji</span></h3>
+        <div class="bar" style="margin-bottom:14px">
+          <input type="text" id="nearCity" list="cityList" placeholder="np. Łódź, Piaseczno…" style="flex:1;min-width:180px">
+          <datalist id="cityList"></datalist>
+          <button class="reset" id="nearGo" style="cursor:pointer">Szukaj</button>
+          <button class="reset" id="nearGPS" style="cursor:pointer">📍 Moja lokalizacja</button>
+          <select id="nearLimit" style="cursor:pointer">
+            <option value="25">najbliższe 25</option>
+            <option value="50">najbliższe 50</option>
+            <option value="100">najbliższe 100</option>
+          </select>
+        </div>
+        <div id="nearInfo" class="muted" style="margin-bottom:10px">Wpisz miejscowość albo kliknij „Moja lokalizacja", żeby zobaczyć najbliższe okazje (z odległością).</div>
+        <div class="tablewrap" style="max-height:560px">
+          <table>
+            <thead><tr><th>Odległość</th><th>Nazwisko</th><th>Miasto</th><th>Województwo</th><th>Data</th><th>Sprawdź</th></tr></thead>
+            <tbody id="nearBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section data-tab="lista" hidden>
       <div class="panel">
         <h3>Lista stanowisk <span class="hint" id="tblHint"></span></h3>
@@ -178,10 +221,21 @@
 
     <div class="foot" id="foot"></div>
   </div>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modalbox">
+      <button class="mclose" id="mclose">✕</button>
+      <h3 id="mtitle"></h3>
+      <div id="msub" class="muted" style="font-size:13px;margin:-6px 0 12px"></div>
+      <div id="mreviews"></div>
+      <iframe id="mmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="mbtns" id="mbtns"></div>
+    </div>
+  </div>
 </div>
 
-<script src="map.js"></script>
-<script src="payload.js"></script>
+<script src="map.js?v=2"></script>
+<script src="payload.js?v=2"></script>
 <script>
 // ---------- deszyfrowanie ----------
 function b64(b){const s=atob(b);const a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a;}
@@ -215,7 +269,7 @@ async function decrypt(pw){
 }
 
 // ---------- stan ----------
-let DATA=null, POS=[];
+let DATA=null, POS=[], TBL=[], ORIGIN=null;
 const HI=['łódzkie','mazowieckie'];
 const MIES=['','sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
 const $=id=>document.getElementById(id);
@@ -232,14 +286,14 @@ async function tryLogin(){
       surname:p.surname, city:p.city, woj:p.woj, court:p.court,
       kancelaria:p.kancelaria||'', address:p.address||''
     })));
-    sessionStorage.setItem('kpw',pw);
+    localStorage.setItem('kpw',pw);
     $('gate').style.display='none'; $('app').style.display='block';
     initFilters(); render();
   }catch(e){ $('err').textContent='Błędne hasło.'; $('go').disabled=false; }
 }
 $('go').onclick=tryLogin;
 $('pw').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
-if(sessionStorage.getItem('kpw')){$('pw').value=sessionStorage.getItem('kpw');tryLogin();}
+if(localStorage.getItem('kpw')){$('pw').value=localStorage.getItem('kpw');tryLogin();}
 
 // ---------- filtry ----------
 function curWoj(){return $('fWoj').value.replace(' ★','');}
@@ -249,6 +303,7 @@ function initFilters(){
   $('fYear').innerHTML='<option value="">Wszystkie lata</option>'+years.map(y=>`<option>${y}</option>`).join('');
   const wojs=[...new Set(POS.map(p=>p.woj))].sort((a,b)=>a.localeCompare(b,'pl'));
   $('fWoj').innerHTML='<option value="">Wszystkie województwa</option>'+wojs.map(w=>`<option>${w}${HI.includes(w)?' ★':''}</option>`).join('');
+  $('cityList').innerHTML=[...new Set(POS.map(p=>p.city))].sort((a,b)=>a.localeCompare(b,'pl')).map(c=>`<option value="${c}">`).join('');
   ['fYear','fWoj','fSearch','fFrom','fTo'].forEach(id=>$(id).addEventListener('input',render));
   $('reset').onclick=()=>{['fYear','fWoj','fSearch','fFrom','fTo'].forEach(id=>$(id).value='');render();};
   document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
@@ -361,19 +416,122 @@ function render(){
 
   // tabela
   const S=[...F].sort((a,b)=>{let x=a[sortK]||'',y=b[sortK]||'';return (x<y?-1:x>y?1:0)*(sortAsc?1:-1);});
-  $('tbody').innerHTML=S.map(p=>{
-    const maps=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`komornik ${p.surname} ${p.address?p.address+' ':''}${p.city}`)}`;
+  TBL=S;
+  $('tbody').innerHTML=S.map((p,i)=>{
     const goog=`https://www.google.com/search?q=${encodeURIComponent(`komornik sądowy ${p.surname} ${p.city}`)}`;
     const kan=(p.kancelaria?`<b>nr ${esc(p.kancelaria)}</b>`:'')+(p.address?`<div class="pill">${esc(p.address)}</div>`:'');
     return `<tr><td>${p.date}</td><td><b>${esc(p.surname)}</b></td><td>${esc(p.city)}</td>`+
       `<td><span class="tag ${HI.includes(p.woj)?'hi':''}">${p.woj}${HI.includes(p.woj)?' ★':''}</span></td>`+
       `<td>${esc(p.court)}</td><td>${kan||'<span class="pill">—</span>'}</td>`+
-      `<td class="links"><a href="${maps}" target="_blank" rel="noopener">🗺️ Maps</a><a href="${goog}" target="_blank" rel="noopener">🔍 Google</a></td>`+
+      `<td class="links"><span class="wbtn" data-i="${i}">🏢 wizytówka</span> <a href="${goog}" target="_blank" rel="noopener">🔍 Google</a></td>`+
       `<td><a href="${p.url}" target="_blank" rel="noopener">ogłoszenie ↗</a></td></tr>`;
   }).join('');
   $('tblHint').textContent=`— ${F.length} pozycji · 🗺️/🔍 = wyszukiwarka na żywo (prawdziwe wizytówki i opinie)`;
   $('foot').innerHTML=`Dane: <a href="${DATA.source}" target="_blank" rel="noopener">gov.pl / Ministerstwo Sprawiedliwości</a> · ${DATA.range.from} – ${DATA.range.to} · zaktualizowano ${DATA.generated}`;
+  renderNear();
 }
+
+// ---------- wizytówka / modal ----------
+function gmKey(){return localStorage.getItem('gmapikey')||'';}
+function closeModal(){$('modal').hidden=true;$('mmap').src='about:blank';}
+$('mclose').onclick=closeModal;
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+function openCard(p){
+  $('mtitle').textContent='Komornik '+p.surname;
+  $('msub').textContent=[p.kancelaria?('Kancelaria nr '+p.kancelaria):'',p.address,p.city].filter(Boolean).join(' · ');
+  const q=`komornik ${p.surname} ${p.address?p.address+' ':''}${p.city}`;
+  $('mmap').src='https://www.google.com/maps?q='+encodeURIComponent(q)+'&output=embed';
+  const mapsUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+  const googUrl='https://www.google.com/search?q='+encodeURIComponent('komornik sądowy '+p.surname+' '+p.city);
+  $('mbtns').innerHTML=
+    `<a class="primary" href="${mapsUrl}" target="_blank" rel="noopener">🗺️ Otwórz w Mapach (opinie)</a>`+
+    `<a href="${googUrl}" target="_blank" rel="noopener">🔍 Google</a>`+
+    `<a href="${p.url}" target="_blank" rel="noopener">📄 Ogłoszenie</a>`;
+  const rv=$('mreviews');
+  if(!gmKey()){
+    rv.innerHTML='<div class="reviews-note">💡 Oceny i treść opinii pojawią się tutaj po dodaniu Twojego klucza Google Maps API (przycisk „⚙ opinie" u góry). Bez klucza pokazujemy realną wizytówkę na mapie i link do opinii — nie wstawiamy niezweryfikowanych danych.</div>';
+  }else{ rv.innerHTML='<div class="reviews-note">Pobieram opinie z Google…</div>'; loadReviews(p); }
+  $('modal').hidden=false;
+}
+$('tbody').addEventListener('click',e=>{const b=e.target.closest('.wbtn');if(b)openCard(TBL[+b.dataset.i]);});
+
+// opinie przez Google Maps JS (klucz użytkownika)
+let _gmLoading=null;
+function ensureMaps(){
+  if(window.google&&google.maps&&google.maps.places)return Promise.resolve();
+  if(_gmLoading)return _gmLoading;
+  _gmLoading=new Promise((res,rej)=>{const s=document.createElement('script');
+    s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(gmKey())+'&libraries=places&language=pl';
+    s.onload=res;s.onerror=()=>rej(new Error('Nie udało się załadować Google Maps (sprawdź klucz).'));
+    document.head.appendChild(s);});
+  return _gmLoading;
+}
+async function loadReviews(p){
+  const rv=$('mreviews');
+  try{
+    await ensureMaps();
+    const svc=new google.maps.places.PlacesService(document.createElement('div'));
+    svc.textSearch({query:'komornik sądowy '+p.surname+' '+p.city},(res,st)=>{
+      if(st!==google.maps.places.PlacesServiceStatus.OK||!res||!res.length){
+        rv.innerHTML='<div class="reviews-note">Nie znaleziono wizytówki tej kancelarii w Google.</div>';return;}
+      svc.getDetails({placeId:res[0].place_id,fields:['name','rating','user_ratings_total','reviews'],language:'pl'},(d,s2)=>{
+        if(s2!==google.maps.places.PlacesServiceStatus.OK||!d){rv.innerHTML='<div class="reviews-note">Brak szczegółów opinii.</div>';return;}
+        let h='';
+        if(d.rating){const f=Math.round(d.rating);h+=`<div style="margin-bottom:8px"><span class="stars">${'★'.repeat(f)}${'☆'.repeat(5-f)}</span> <b>${d.rating}</b> <span class="muted">(${d.user_ratings_total||0} opinii)</span></div>`;}
+        (d.reviews||[]).slice(0,3).forEach(r=>{h+=`<div class="review"><div class="rh"><span>${esc(r.author_name||'')}</span><span>★ ${r.rating}</span></div>${esc((r.text||'').slice(0,260))}${(r.text||'').length>260?'…':''}</div>`;});
+        rv.innerHTML=h||'<div class="reviews-note">Wizytówka istnieje, ale bez opinii.</div>';
+      });
+    });
+  }catch(e){rv.innerHTML='<div class="reviews-note">Błąd opinii: '+esc(String(e.message||e))+'</div>';}
+}
+$('apikeyBtn').onclick=()=>{
+  const v=prompt('Wklej klucz Google Maps JavaScript API (z włączonym Places API), aby widzieć oceny i opinie w oknie wizytówki. Puste = wyłącz.\n\nKlucz zapisuje się tylko w tej przeglądarce.',gmKey());
+  if(v===null)return;
+  if(v.trim())localStorage.setItem('gmapikey',v.trim());else localStorage.removeItem('gmapikey');
+  _gmLoading=null;
+  alert(v.trim()?'Klucz zapisany — opinie włączone.':'Klucz usunięty.');
+};
+$('logout').onclick=()=>{localStorage.removeItem('kpw');location.reload();};
+
+// ---------- w pobliżu ----------
+function haversine(a,b){const R=6371,dLat=(b[0]-a[0])*Math.PI/180,dLon=(b[1]-a[1])*Math.PI/180,
+  s=Math.sin(dLat/2)**2+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLon/2)**2;
+  return Math.round(2*R*Math.asin(Math.sqrt(s)));}
+async function geocodeLive(city){
+  const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pl&q='+encodeURIComponent(city+', Polska'));
+  const a=await r.json();return (a&&a.length)?[parseFloat(a[0].lat),parseFloat(a[0].lon)]:null;
+}
+function renderNear(){
+  if(!$('nearBody'))return;
+  const geo=DATA.cityGeo||{};
+  if(!ORIGIN){$('nearBody').innerHTML='';return;}
+  const rows=filtered().map(p=>{const g=geo[p.city];return g?Object.assign({},p,{d:haversine(ORIGIN,g)}):null;}).filter(Boolean).sort((a,b)=>a.d-b.d);
+  const shown=rows.slice(0,+$('nearLimit').value);
+  $('nearInfo').innerHTML=`Od punktu startowego: <b>${rows.length}</b> stanowisk z lokalizacją · pokazuję najbliższe <b>${shown.length}</b>`;
+  $('nearBody').innerHTML=shown.map(p=>{
+    const goog=`https://www.google.com/search?q=${encodeURIComponent('komornik sądowy '+p.surname+' '+p.city)}`;
+    return `<tr><td><b>${p.d} km</b></td><td><b>${esc(p.surname)}</b></td><td>${esc(p.city)}</td>`+
+      `<td><span class="tag ${HI.includes(p.woj)?'hi':''}">${p.woj}</span></td><td>${p.date}</td>`+
+      `<td class="links"><a href="${goog}" target="_blank" rel="noopener">🔍 Google</a> <a href="${p.url}" target="_blank" rel="noopener">ogłoszenie ↗</a></td></tr>`;
+  }).join('')||'<tr><td colspan="6" class="muted">Brak stanowisk z lokalizacją w bieżącym filtrze.</td></tr>';
+}
+$('nearGo').onclick=async()=>{
+  const c=$('nearCity').value.trim();if(!c)return;
+  $('nearInfo').textContent='Szukam lokalizacji…';
+  let o=(DATA.cityGeo||{})[c]||null;
+  if(!o){try{o=await geocodeLive(c);}catch(e){}}
+  if(!o){$('nearInfo').textContent='Nie znaleziono tej miejscowości.';return;}
+  ORIGIN=o;renderNear();
+};
+$('nearCity').addEventListener('keydown',e=>{if(e.key==='Enter')$('nearGo').click();});
+$('nearLimit').addEventListener('change',renderNear);
+$('nearGPS').onclick=()=>{
+  if(!navigator.geolocation){$('nearInfo').textContent='Brak wsparcia lokalizacji w przeglądarce.';return;}
+  $('nearInfo').textContent='Pobieram lokalizację…';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{ORIGIN=[pos.coords.latitude,pos.coords.longitude];$('nearCity').value='(moja lokalizacja)';renderNear();},
+    ()=>{$('nearInfo').textContent='Nie udało się pobrać lokalizacji (brak zgody).';});
+};
 </script>
 </body>
 </html>
