@@ -92,7 +92,8 @@
   svg#map path:hover{filter:brightness(1.35)}
   svg#map path.sel{stroke:#fff;stroke-width:1.6}
   svg#map text{pointer-events:none;font-weight:700;paint-order:stroke;stroke:#0b0f1a;stroke-width:3.4px;fill:#fff}
-  svg#map text.nm{font-size:13px} svg#map text.ct{font-size:14px;fill:#dfe6f7}
+  svg#map text{stroke-width:4px}
+  svg#map text.nm{font-size:17px} svg#map text.ct{font-size:20px;fill:#eef4ff;font-weight:800}
   svg#map text.hi{fill:var(--gold)}
   .legend{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;margin-top:12px;flex-wrap:wrap}
   .legend .sw{height:10px;width:34px;border-radius:3px}
@@ -142,6 +143,18 @@
   .rev{border-top:1px solid var(--line);padding:10px 0;font-size:13px}
   .rev .h{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:3px}
   .note{background:#0f1525;border:1px dashed var(--line);border-radius:11px;padding:12px;font-size:13px;color:var(--muted);margin-bottom:12px}
+  /* INSIGHTS */
+  .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:14px}
+  .ins{background:#0f1525;border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+  .ins .t{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .ins .big{font-size:23px;font-weight:780;margin:7px 0 3px;color:var(--acc2);line-height:1.15}
+  .ins .big.g{color:var(--gold)}
+  .ins .d{font-size:12px;color:var(--dim)}
+  .tips ul{list-style:none;margin:0;padding:0}
+  .tips li{padding:12px 2px;border-bottom:1px solid var(--line);font-size:13.5px;display:flex;gap:12px;align-items:flex-start}
+  .tips li:last-child{border-bottom:0}
+  .tips li .e{font-size:19px;flex-shrink:0;line-height:1.3}
+  .tips li b{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -162,7 +175,6 @@
     <div class="brand"><span class="mk">⚖</span> Komornicy · apelacje</div>
     <span class="pill" id="rangeInfo"></span>
     <span class="sp"></span>
-    <button class="ghost" id="apikeyBtn" title="Klucz Google API do opinii">⚙ opinie</button>
     <button class="ghost" id="logout">Wyloguj</button>
   </div></div>
 
@@ -181,6 +193,7 @@
     <div class="tabs">
       <button class="on" data-tab="mapa">🗺️ Mapa</button>
       <button data-tab="trendy">📈 Trendy</button>
+      <button data-tab="dane">💡 Najciekawsze</button>
       <button data-tab="blisko">📍 W pobliżu</button>
       <button data-tab="lista">📋 Lista</button>
     </div>
@@ -215,6 +228,17 @@
       <div class="grid2">
         <div class="panel"><h3>🏙️ Top miasta</h3><div id="cCity"></div></div>
         <div class="panel"><h3>👤 Najczęstsze nazwiska</h3><div id="cName"></div></div>
+      </div>
+    </section>
+
+    <section data-tab="dane" hidden>
+      <div class="panel">
+        <h3>💡 Najciekawsze dane <span class="hint">— przelicza się wg filtrów</span></h3>
+        <div class="insights" id="insights"></div>
+      </div>
+      <div class="panel tips">
+        <h3>🎯 Wskazówki dla przejmującego stanowisko</h3>
+        <div id="tips"></div>
       </div>
     </section>
 
@@ -356,8 +380,8 @@ function renderMap(byApel){
   POW_PATHS.forEach(p=>{const n=byApel[p.apel]||0,t=n/max;
     h+=`<path d="${p.d}" data-apel="${p.apel}" fill="${scaleColor(t)}" class="${sel===p.apel?'sel':''}"><title>${apName(p.apel)}: ${n}</title></path>`;});
   for(const [a,c] of Object.entries(APEL_CENTROIDS)){const n=byApel[a]||0,hi=HI.includes(a);
-    h+=`<text class="nm ${hi?'hi':''}" x="${c[0]}" y="${c[1]-4}">${cap(a)}${hi?' ★':''}</text>`+
-       `<text class="ct ${hi?'hi':''}" x="${c[0]}" y="${c[1]+13}">${n}</text>`;}
+    h+=`<text class="nm ${hi?'hi':''}" x="${c[0]}" y="${c[1]-6}">${cap(a)}${hi?' ★':''}</text>`+
+       `<text class="ct ${hi?'hi':''}" x="${c[0]}" y="${c[1]+17}">${n}</text>`;}
   svg.innerHTML=h;
   svg.querySelectorAll('path').forEach(pa=>pa.onclick=()=>{const a=pa.dataset.apel;
     $('fApel').value=(sel===a)?'':(apName(a)+(HI.includes(a)?' ★':''));render();});
@@ -418,7 +442,57 @@ function render(){
   }).join('');
   $('tblHint').textContent=`${F.length} pozycji · 🏢 wizytówka Google · 🔍 szukaj · 📄 ogłoszenie`;
   $('foot').innerHTML=`Dane: <a href="${DATA.source}" target="_blank" rel="noopener">gov.pl / Ministerstwo Sprawiedliwości</a> · podział wg sądów apelacyjnych · ${DATA.range.from}–${DATA.range.to} · akt. ${DATA.generated}`;
+  renderInsights(F,{byApel,cities,annMap:anns,annCount,avgPos,med,interval,perMonth,dts});
   renderNear();
+}
+
+function renderInsights(F,X){
+  if(!$('insights'))return;
+  const byApelArr=Object.entries(X.byApel).sort((a,b)=>b[1]-a[1]);
+  const top=byApelArr[0], low=byApelArr[byApelArr.length-1];
+  const cityArr=Object.entries(X.cities).sort((a,b)=>b[1]-a[1]);
+  const topCity=cityArr[0];
+  // rekordowe obwieszczenie
+  const rec=X.annMap.slice().sort((a,b)=>b.c-a.c)[0];
+  // sezonowość (miesiąc kalendarzowy)
+  const mm={};F.forEach(p=>{const k=+p.date.slice(5,7);mm[k]=(mm[k]||0)+1;});
+  const busM=Object.entries(mm).sort((a,b)=>b[1]-a[1])[0];
+  const MN=['','styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+  // trend roczny
+  const by={};F.forEach(p=>{by[p.year]=(by[p.year]||0)+1;});
+  const ys=Object.keys(by).sort();
+  const ly=ys[ys.length-1], py=ys[ys.length-2];
+  let trend='—',trendD='';
+  if(py){const dlt=by[ly]-by[py];trend=(dlt>=0?'+':'')+dlt;trendD=`${py}: ${by[py]} → ${ly}: ${by[ly]}`;}
+  // rytm / przewidywanie
+  let lastDate='—',sinceTxt='',nextTxt='';
+  if(X.dts.length){const last=X.dts[X.dts.length-1];lastDate=last;
+    const since=Math.round((Date.now()-new Date(last))/86400000);
+    sinceTxt=`${since} dni temu`;
+    const m=String(X.interval).match(/(\d+)/);
+    if(m){const ivl=+m[1],eta=ivl-since;nextTxt=eta>0?`wg rytmu kolejne ~ za ${eta} dni`:`kolejne już „spóźnione" o ${-eta} dni — bądź czujny`;}
+  }
+  const ins=(t,big,d,g)=>`<div class="ins"><div class="t">${t}</div><div class="big ${g?'g':''}">${big}</div><div class="d">${d||''}</div></div>`;
+  $('insights').innerHTML=
+    ins('🏆 Najwięcej okazji', top?cap(top[0]):'—', top?`${top[1]} stanowisk · ${Math.round(top[1]/F.length*100)}% wszystkich`:'',1)+
+    ins('🎯 Najmniej obłożona', low?cap(low[0]):'—', low?`tylko ${low[1]} — potencjalnie mniejsza konkurencja`:'')+
+    ins('🏙️ Hotspot (miasto)', topCity?topCity[0]:'—', topCity?`${topCity[1]} wolnych stanowisk`:'')+
+    ins('📦 Rekordowe obwieszczenie', rec?rec.c+' naraz':'—', rec?`jedno ogłoszenie z dnia ${rec.date}`:'')+
+    ins('📅 Szczyt publikacji', busM?MN[+busM[0]]:'—', busM?`najwięcej stanowisk w tym miesiącu (${busM[1]})`:'')+
+    ins('⏱️ Rytm ogłoszeń', X.interval, `średnia przerwa między obwieszczeniami`)+
+    ins('📈 Trend roczny', trend+' r/r', trendD)+
+    ins('🔮 Ostatnie obwieszczenie', lastDate, [sinceTxt,nextTxt].filter(Boolean).join(' · '));
+
+  const tip=(e,h)=>`<li><span class="e">${e}</span><span>${h}</span></li>`;
+  $('tips').innerHTML='<ul>'+
+    tip('📈',`Najwięcej wolnych stanowisk: apelacja <b>${top?cap(top[0]):'—'}</b> (${top?top[1]:0}). Tam najwięcej okazji — ale spodziewaj się też największej liczby kandydatów.`)+
+    tip('🎯',`Najmniej obłożona: apelacja <b>${low?cap(low[0]):'—'}</b> (${low?low[1]:0}). Mniej ogłoszeń bywa = mniejsza konkurencja o jedno stanowisko.`)+
+    tip('📅',`Najwięcej obwieszczeń pojawia się w miesiącu <b>${busM?MN[+busM[0]]:'—'}</b>. Miej komplet dokumentów gotowy z wyprzedzeniem, by zdążyć w sezonie.`)+
+    tip('⏱️',`Średnio nowe obwieszczenie pojawia się <b>${X.interval}</b>, ostatnie ${sinceTxt||'—'}. Termin na wniosek zwykle biegnie od dnia publikacji — masz alert WhatsApp/e-mail, więc reaguj od razu.`)+
+    tip('📦',`Jedno obwieszczenie to średnio <b>${X.avgPos.toFixed(1)}</b> stanowisk (mediana ${X.med}). W jednym ogłoszeniu bywa kilka rewirów — czytaj całość, nie tylko nagłówek.`)+
+    tip('🏢',`Przed decyzją sprawdź „wizytówkę" przejmowanej kancelarii (Lista → 🏢) i opinie w Google — lokalizacja i otoczenie rewiru wpływają na realne wpływy.`)+
+    tip('📍',`Skorzystaj z zakładki „W pobliżu", by znaleźć wolne stanowiska blisko Ciebie i ocenić dojazd/rewir, zanim złożysz wniosek.`)+
+    '</ul>';
 }
 function kpi(ic,lab,val,cls){return `<div class="kpi ${cls}"><div class="ic">${ic}</div><div class="lab">${lab}</div><div class="val">${val}</div></div>`;}
 
@@ -437,8 +511,7 @@ function openCard(p){
     `<a href="https://www.google.com/search?q=${encodeURIComponent('komornik sądowy '+p.surname+' '+p.city)}" target="_blank" rel="noopener">🔍 Google</a>`+
     `<a href="${p.url}" target="_blank" rel="noopener">📄 Ogłoszenie</a>`;
   const rv=$('mrev');
-  if(!gmKey()){rv.innerHTML='<div class="note">💡 Oceny i opinie pojawią się tu po dodaniu klucza Google Maps API („⚙ opinie" u góry). Bez klucza pokazujemy realną wizytówkę na mapie i link do opinii — nie wstawiamy niezweryfikowanych danych.</div>';}
-  else{rv.innerHTML='<div class="note">Pobieram opinie…</div>';loadReviews(p);}
+  rv.innerHTML='<div class="note">💡 Poniżej realna wizytówka kancelarii w Google. Po opinie kliknij <b>„🗺️ Mapy (opinie)"</b> — otworzy prawdziwy profil z ocenami (jeśli istnieje). Nie wstawiamy niezweryfikowanych danych.</div>';
   $('modal').hidden=false;
 }
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('.wbtn');if(b)openCard(TBL[+b.dataset.i]);});
@@ -458,9 +531,6 @@ async function loadReviews(p){const rv=$('mrev');
         rv.innerHTML=h||'<div class="note">Wizytówka bez opinii.</div>';});});
   }catch(e){rv.innerHTML='<div class="note">Błąd: '+esc(String(e.message||e))+'</div>';}
 }
-$('apikeyBtn').onclick=()=>{const v=prompt('Wklej klucz Google Maps JavaScript API (Places), aby widzieć oceny i opinie. Puste = wyłącz.\nKlucz zapisuje się tylko w tej przeglądarce.',gmKey());
-  if(v===null)return;if(v.trim())localStorage.setItem('gmapikey',v.trim());else localStorage.removeItem('gmapikey');_gm=null;
-  alert(v.trim()?'Klucz zapisany — opinie włączone.':'Klucz usunięty.');};
 $('logout').onclick=()=>{localStorage.removeItem('kpw');location.reload();};
 
 /* w pobliżu */
