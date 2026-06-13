@@ -3,76 +3,94 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Komornicy — wolne stanowiska (statystyki)</title>
+<title>Komornicy — wolne stanowiska</title>
 <style>
   :root{
-    --bg:#0f1424; --panel:#171d33; --panel2:#1e2540; --line:#2b3354;
-    --txt:#e8ecf7; --muted:#97a0c0; --accent:#4f8cff; --accent2:#22c55e;
-    --hot1:#f59e0b; --hot2:#ef4444;
+    --bg:#0e1322; --panel:#161c30; --panel2:#1d2541; --line:#2a3350;
+    --txt:#eef1fa; --muted:#9aa3c4; --accent:#5b94ff; --accent-d:#2f4f8f;
+    --gold:#f7a724; --gold2:#ef4444;
+    --radius:14px; --shadow:0 8px 30px rgba(0,0,0,.28);
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',Roboto,Arial,sans-serif;font-size:14px}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,Roboto,Arial,sans-serif;font-size:14px;line-height:1.45}
   a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-  /* --- ekran logowania --- */
-  #gate{position:fixed;inset:0;background:linear-gradient(160deg,#0f1424,#1a2240 60%,#0d1020);display:flex;align-items:center;justify-content:center;z-index:50}
-  #gate .box{background:var(--panel);padding:34px 30px;border-radius:16px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid var(--line)}
-  #gate h1{font-size:19px;margin:0 0 4px}
+  .muted{color:var(--muted)}
+  /* gate */
+  #gate{position:fixed;inset:0;background:radial-gradient(1200px 600px at 70% -10%,#1b2540,transparent),linear-gradient(160deg,#0e1322,#0b1020);display:flex;align-items:center;justify-content:center;z-index:50}
+  #gate .box{background:var(--panel);padding:34px 30px;border-radius:18px;width:350px;max-width:92vw;box-shadow:var(--shadow);border:1px solid var(--line)}
+  #gate h1{font-size:20px;margin:0 0 6px}
   #gate p{color:var(--muted);margin:0 0 18px;font-size:13px}
-  #gate input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:15px}
-  #gate button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+  #gate input{width:100%;padding:13px 14px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:15px}
+  #gate button{width:100%;margin-top:12px;padding:13px;border:0;border-radius:11px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
   #gate button:disabled{opacity:.6;cursor:wait}
-  #gate .err{color:#ff8088;font-size:13px;margin-top:10px;min-height:18px}
-  /* --- layout --- */
-  header.top{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
-  header.top h1{font-size:18px;margin:0}
-  header.top .sub{color:var(--muted);font-size:12px}
-  .wrap{padding:18px 22px;max-width:1180px;margin:0 auto}
-  .bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
-  .bar select,.bar input{padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:14px}
-  .bar input[type=text]{flex:1;min-width:170px}
-  .bar .reset{background:var(--panel);cursor:pointer}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px 16px}
-  .card .k{color:var(--muted);font-size:12px;margin-bottom:6px}
-  .card .v{font-size:26px;font-weight:700}
-  .card .v small{font-size:13px;color:var(--muted);font-weight:400}
-  .card.hot{border-color:var(--hot1);background:linear-gradient(160deg,#241a10,#171d33)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
-  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 18px}
-  .panel h3{margin:0 0 14px;font-size:15px}
+  #gate .err{color:#ff8c93;font-size:13px;margin-top:10px;min-height:18px}
+  /* top */
+  header.top{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:linear-gradient(180deg,#141a2e,#10142a)}
+  header.top h1{font-size:17px;margin:0;font-weight:650}
+  header.top .badge{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:3px 10px;border-radius:20px}
+  .wrap{padding:18px 22px;max-width:1200px;margin:0 auto}
+  /* filtry */
+  .bar{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px;align-items:center}
+  .bar select,.bar input{padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:14px;outline:none}
+  .bar select:focus,.bar input:focus{border-color:var(--accent)}
+  .bar input[type=text]{flex:1;min-width:180px}
+  .bar .reset{background:transparent;cursor:pointer;color:var(--muted)}
+  /* kpi */
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .kpi .c{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .kpi .c .k{color:var(--muted);font-size:12px;margin-bottom:7px}
+  .kpi .c .v{font-size:25px;font-weight:750;letter-spacing:.2px}
+  .kpi .c .v small{font-size:12px;color:var(--muted);font-weight:500}
+  .kpi .c.gold{border-color:var(--gold);background:linear-gradient(160deg,#241b0d,#161c30)}
+  .kpi .c.gold .v{color:var(--gold)}
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+  .tabs button{background:none;border:0;color:var(--muted);font-size:14px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tabs button.on{color:var(--txt);border-bottom-color:var(--accent)}
+  section[data-tab]{animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+  /* panele */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px}
+  .panel h3{margin:0 0 14px;font-size:15px;font-weight:650}
   .panel h3 .hint{color:var(--muted);font-weight:400;font-size:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .maprow{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;align-items:start}
+  @media(max-width:860px){.grid2,.maprow{grid-template-columns:1fr}}
+  /* mapa svg */
+  .mapbox{position:relative}
+  svg#svgmap{width:100%;height:auto;display:block}
+  svg#svgmap path{stroke:#0e1322;stroke-width:1.2;cursor:pointer;transition:fill .15s,filter .15s}
+  svg#svgmap path:hover{filter:brightness(1.25)}
+  svg#svgmap path.hi{stroke:var(--gold);stroke-width:2.4}
+  svg#svgmap path.sel{stroke:#fff;stroke-width:2.6}
+  svg#svgmap text{fill:#fff;font-size:15px;font-weight:700;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#0b1020;stroke-width:3px}
+  svg#svgmap text.hi{fill:var(--gold)}
+  .legend{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin-top:10px;flex-wrap:wrap}
+  .legend .sw{height:11px;width:30px;border-radius:3px}
+  .legend .star{color:var(--gold)}
   /* slupki */
-  .barrow{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
-  .barrow .lab{width:140px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .barrow .track{flex:1;background:var(--panel2);border-radius:6px;height:18px;overflow:hidden}
-  .barrow .fill{height:100%;background:var(--accent);border-radius:6px}
-  .barrow .fill.hot{background:linear-gradient(90deg,var(--hot1),var(--hot2))}
+  .barrow{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+  .barrow .lab{width:150px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barrow .track{flex:1;background:var(--panel2);border-radius:6px;height:16px;overflow:hidden}
+  .barrow .fill{height:100%;background:linear-gradient(90deg,var(--accent-d),var(--accent));border-radius:6px}
+  .barrow .fill.hot{background:linear-gradient(90deg,var(--gold),var(--gold2))}
   .barrow .num{width:42px;text-align:right;color:var(--muted)}
-  .barrow.hi .lab{color:var(--hot1);font-weight:700}
-  /* mapa kafelkowa */
-  .map{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .tile{position:relative;border-radius:10px;padding:10px 8px;min-height:62px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;transition:transform .08s}
-  .tile:hover{transform:translateY(-2px)}
-  .tile .tn{font-size:11px;color:var(--txt);opacity:.92;line-height:1.15}
-  .tile .tc{font-size:20px;font-weight:700;margin-top:4px}
-  .tile.hi{border:2px solid var(--hot1);box-shadow:0 0 0 1px var(--hot1) inset}
-  .tile.hi .tn::after{content:" ★";color:var(--hot1)}
-  .tile.sel{outline:2px solid #fff}
-  .legend{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin-top:12px}
-  .legend .sw{height:12px;width:26px;border-radius:3px}
+  .barrow.hi .lab{color:var(--gold);font-weight:700}
   /* tabela */
+  .tablewrap{max-height:600px;overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
   table{width:100%;border-collapse:collapse}
-  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
-  th{color:var(--muted);cursor:pointer;user-select:none;position:sticky;top:0;background:var(--panel)}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  th{color:var(--muted);cursor:pointer;user-select:none;position:sticky;top:0;background:var(--panel);z-index:1;font-weight:600}
   tr:hover td{background:var(--panel2)}
   .tag{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;background:var(--panel2);border:1px solid var(--line)}
-  .tag.hi{background:#2a1e0c;border-color:var(--hot1);color:var(--hot1)}
-  .tablewrap{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:13px}
+  .tag.hi{background:#2a1e0c;border-color:var(--gold);color:var(--gold)}
   td.links{white-space:nowrap}
-  td.links a{display:inline-block;margin-right:8px;font-size:12px;padding:2px 7px;border:1px solid var(--line);border-radius:7px;background:var(--panel2)}
-  .foot{color:var(--muted);font-size:12px;text-align:center;padding:22px}
+  td.links a{display:inline-block;margin-right:6px;font-size:12px;padding:2px 7px;border:1px solid var(--line);border-radius:7px;background:var(--panel2)}
   .pill{font-size:11px;color:var(--muted)}
+  .statline{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--muted);font-size:13px;margin-bottom:16px}
+  .statline b{color:var(--txt)}
+  .foot{color:var(--muted);font-size:12px;text-align:center;padding:24px}
 </style>
 </head>
 <body>
@@ -80,7 +98,7 @@
 <div id="gate">
   <div class="box">
     <h1>⚖️ Statystyki komornicze</h1>
-    <p>Wolne stanowiska komornika sądowego — dane z ogłoszeń Ministerstwa Sprawiedliwości. Wpisz hasło, aby zobaczyć.</p>
+    <p>Wolne stanowiska komornika sądowego — dane z ogłoszeń Ministerstwa Sprawiedliwości (2018–2026). Wpisz hasło.</p>
     <input id="pw" type="password" placeholder="Hasło" autofocus>
     <button id="go">Pokaż</button>
     <div class="err" id="err"></div>
@@ -90,7 +108,7 @@
 <div id="app" style="display:none">
   <header class="top">
     <h1>⚖️ Wolne stanowiska komornika sądowego</h1>
-    <span class="sub" id="rangeInfo"></span>
+    <span class="badge" id="rangeInfo"></span>
   </header>
   <div class="wrap">
     <div class="bar">
@@ -99,69 +117,70 @@
       <input type="text" id="fSearch" placeholder="Szukaj: nazwisko / miasto / sąd…">
       <input type="date" id="fFrom" title="Od daty">
       <input type="date" id="fTo" title="Do daty">
-      <select id="reset" class="reset"><option value="">↺ Wyczyść filtry</option></select>
+      <button class="reset" id="reset">↺ wyczyść</button>
     </div>
 
-    <div class="cards" id="cards"></div>
+    <div class="kpi" id="kpi"></div>
 
-    <div class="panel" style="margin-bottom:22px">
-      <h3>Analiza częstotliwości <span class="hint">— w bieżącym wyborze (filtry/zakres dat)</span></h3>
-      <div class="cards" id="freq" style="margin:0"></div>
-    </div>
+    <nav class="tabs">
+      <button class="on" data-tab="mapa">🗺️ Mapa</button>
+      <button data-tab="trendy">📈 Trendy</button>
+      <button data-tab="lista">📋 Lista</button>
+    </nav>
 
-    <div class="grid2">
-      <div class="panel">
-        <h3>Przejęcia wg roku <span class="hint">(liczba wolnych stanowisk)</span></h3>
-        <div id="chYear"></div>
+    <section data-tab="mapa">
+      <div class="maprow">
+        <div class="panel mapbox">
+          <h3>Mapa przejęć wg województw <span class="hint">— kliknij region, by filtrować</span></h3>
+          <svg id="svgmap" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="legend">
+            <span>mniej</span><span class="sw" style="background:rgba(91,148,255,.15)"></span>
+            <span class="sw" style="background:rgba(91,148,255,.5)"></span>
+            <span class="sw" style="background:rgba(91,148,255,.95)"></span><span>więcej</span>
+            <span style="margin-left:10px" class="star">★ łódzkie i mazowieckie (wyróżnione)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Ranking województw</h3>
+          <div id="chWoj"></div>
+        </div>
       </div>
-      <div class="panel">
-        <h3>Przejęcia wg miesiąca <span class="hint" id="monthHint"></span></h3>
-        <div id="chMonth"></div>
-      </div>
-    </div>
+    </section>
 
-    <div class="grid2">
-      <div class="panel">
-        <h3>Mapa województw <span class="hint">— kliknij, by filtrować · ★ łódzkie i mazowieckie</span></h3>
-        <div class="map" id="map"></div>
-        <div class="legend"><span>mniej</span><span class="sw" style="background:#1e2540"></span><span class="sw" style="background:#2f4f8f"></span><span class="sw" style="background:#4f8cff"></span><span>więcej</span></div>
+    <section data-tab="trendy" hidden>
+      <div class="statline" id="statline"></div>
+      <div class="grid2">
+        <div class="panel"><h3>Przejęcia wg roku</h3><div id="chYear"></div></div>
+        <div class="panel"><h3>Przejęcia wg miesiąca <span class="hint" id="monthHint"></span></h3><div id="chMonth"></div></div>
       </div>
-      <div class="panel">
-        <h3>Ranking województw</h3>
-        <div id="chWoj"></div>
+      <div class="grid2">
+        <div class="panel"><h3>Top miasta</h3><div id="chCity"></div></div>
+        <div class="panel"><h3>Najczęstsze nazwiska <span class="hint">(powtórzenia = kilka stanowisk)</span></h3><div id="chName"></div></div>
       </div>
-    </div>
+    </section>
 
-    <div class="grid2">
+    <section data-tab="lista" hidden>
       <div class="panel">
-        <h3>Top miasta (przejęcia)</h3>
-        <div id="chCity"></div>
+        <h3>Lista stanowisk <span class="hint" id="tblHint"></span></h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr>
+              <th data-k="date">Data</th><th data-k="surname">Nazwisko</th>
+              <th data-k="city">Miasto</th><th data-k="woj">Województwo</th>
+              <th data-k="court">Sąd</th><th>Kancelaria / adres</th>
+              <th>Sprawdź</th><th>Ogłoszenie</th>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="panel">
-        <h3>Najczęstsze nazwiska <span class="hint">(powtórzenia = kilka stanowisk)</span></h3>
-        <div id="chName"></div>
-      </div>
-    </div>
-
-    <div class="panel" style="margin-bottom:22px">
-      <h3>Lista stanowisk <span class="hint" id="tblHint"></span></h3>
-      <div class="tablewrap">
-        <table>
-          <thead><tr>
-            <th data-k="date">Data</th><th data-k="surname">Nazwisko</th>
-            <th data-k="city">Miasto</th><th data-k="woj">Województwo</th>
-            <th data-k="court">Sąd</th><th>Kancelaria / adres</th>
-            <th>Sprawdź</th><th>Ogłoszenie</th>
-          </tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </div>
+    </section>
 
     <div class="foot" id="foot"></div>
   </div>
 </div>
 
+<script src="map.js"></script>
 <script src="payload.js"></script>
 <script>
 // ---------- deszyfrowanie ----------
@@ -198,17 +217,10 @@ async function decrypt(pw){
 // ---------- stan ----------
 let DATA=null, POS=[];
 const HI=['łódzkie','mazowieckie'];
-const TILES={
-  'zachodniopomorskie':[1,1],'pomorskie':[2,1],'warmińsko-mazurskie':[3,1],'podlaskie':[4,1],
-  'lubuskie':[1,2],'kujawsko-pomorskie':[2,2],'mazowieckie':[3,2],
-  'wielkopolskie':[2,3],'łódzkie':[3,3],'lubelskie':[4,3],
-  'dolnośląskie':[1,4],'opolskie':[2,4],'świętokrzyskie':[3,4],'podkarpackie':[4,4],
-  'śląskie':[2,5],'małopolskie':[3,5]
-};
 const MIES=['','sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
-
-// ---------- logowanie ----------
 const $=id=>document.getElementById(id);
+
+// ---------- login ----------
 async function tryLogin(){
   const pw=$('pw').value; if(!pw)return;
   $('go').disabled=true; $('err').textContent='Odszyfrowywanie…';
@@ -216,34 +228,39 @@ async function tryLogin(){
     DATA=await decrypt(pw);
     POS=[];
     DATA.announcements.forEach(a=>(a.positions||[]).forEach(p=>POS.push({
-      date:a.date, year:a.date.slice(0,4), ym:a.date.slice(0,7),
-      url:a.url, surname:p.surname, city:p.city, woj:p.woj, court:p.court,
+      date:a.date, year:a.date.slice(0,4), url:a.url,
+      surname:p.surname, city:p.city, woj:p.woj, court:p.court,
       kancelaria:p.kancelaria||'', address:p.address||''
     })));
     sessionStorage.setItem('kpw',pw);
     $('gate').style.display='none'; $('app').style.display='block';
     initFilters(); render();
-  }catch(e){
-    $('err').textContent='Błędne hasło.'; $('go').disabled=false;
-  }
+  }catch(e){ $('err').textContent='Błędne hasło.'; $('go').disabled=false; }
 }
 $('go').onclick=tryLogin;
 $('pw').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
 if(sessionStorage.getItem('kpw')){$('pw').value=sessionStorage.getItem('kpw');tryLogin();}
 
 // ---------- filtry ----------
+function curWoj(){return $('fWoj').value.replace(' ★','');}
 function initFilters(){
   $('rangeInfo').textContent=`${POS.length} stanowisk · ${DATA.announcements.length} ogłoszeń · ${DATA.range.from} – ${DATA.range.to}`;
   const years=[...new Set(POS.map(p=>p.year))].sort();
   $('fYear').innerHTML='<option value="">Wszystkie lata</option>'+years.map(y=>`<option>${y}</option>`).join('');
   const wojs=[...new Set(POS.map(p=>p.woj))].sort((a,b)=>a.localeCompare(b,'pl'));
-  $('fWoj').innerHTML='<option value="">Wszystkie województwa</option>'+wojs.map(w=>`<option ${HI.includes(w)?'data-hi=1':''}>${w}${HI.includes(w)?' ★':''}</option>`).join('');
+  $('fWoj').innerHTML='<option value="">Wszystkie województwa</option>'+wojs.map(w=>`<option>${w}${HI.includes(w)?' ★':''}</option>`).join('');
   ['fYear','fWoj','fSearch','fFrom','fTo'].forEach(id=>$(id).addEventListener('input',render));
-  $('reset').addEventListener('change',()=>{['fYear','fWoj','fSearch','fFrom','fTo'].forEach(id=>$(id).value='');$('reset').value='';render();});
+  $('reset').onclick=()=>{['fYear','fWoj','fSearch','fFrom','fTo'].forEach(id=>$(id).value='');render();};
+  document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('section[data-tab]').forEach(s=>s.hidden=s.dataset.tab!==b.dataset.tab);
+  });
+  document.querySelectorAll('th[data-k]').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k; if(sortK===k)sortAsc=!sortAsc; else{sortK=k;sortAsc=(k!=='date');} render();
+  });
 }
 function filtered(){
-  const y=$('fYear').value, w=$('fWoj').value.replace(' ★',''),
-        s=$('fSearch').value.trim().toLowerCase(), f=$('fFrom').value, t=$('fTo').value;
+  const y=$('fYear').value,w=curWoj(),s=$('fSearch').value.trim().toLowerCase(),f=$('fFrom').value,t=$('fTo').value;
   return POS.filter(p=>{
     if(y&&p.year!==y)return false;
     if(w&&p.woj!==w)return false;
@@ -254,7 +271,7 @@ function filtered(){
   });
 }
 
-// ---------- pomocnicze wykresy ----------
+// ---------- helpers ----------
 function countBy(arr,key){const m={};arr.forEach(x=>{const k=typeof key==='function'?key(x):x[key];m[k]=(m[k]||0)+1;});return m;}
 function barChart(el,entries,{hot=[]}={}){
   const max=Math.max(1,...entries.map(e=>e[1]));
@@ -265,116 +282,98 @@ function barChart(el,entries,{hot=[]}={}){
       `<div class="num">${n}</div></div>`;
   }).join('')||'<div class="pill">brak danych</div>';
 }
+function esc(s){return (s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+
+// ---------- mapa ----------
+function renderMap(woj){
+  const svg=$('svgmap'); svg.setAttribute('viewBox',MAP_VIEWBOX);
+  const max=Math.max(1,...Object.values(woj),1);
+  const sel=curWoj();
+  let h='';
+  for(const [name,d] of Object.entries(MAP_PATHS)){
+    const n=woj[name]||0, t=n/max, hi=HI.includes(name);
+    const fill=`rgba(91,148,255,${(0.08+t*0.87).toFixed(3)})`;
+    h+=`<path d="${d}" data-w="${name}" fill="${fill}" class="${hi?'hi':''} ${sel===name?'sel':''}"><title>${name}: ${n}</title></path>`;
+  }
+  for(const [name,c] of Object.entries(MAP_CENTROIDS)){
+    const n=woj[name]||0;
+    h+=`<text x="${c[0]}" y="${c[1]+5}" class="${HI.includes(name)?'hi':''}">${n}</text>`;
+  }
+  svg.innerHTML=h;
+  svg.querySelectorAll('path').forEach(p=>p.onclick=()=>{
+    const w=p.dataset.w; $('fWoj').value=(sel===w)?'':(w+(HI.includes(w)?' ★':'')); render();
+  });
+}
 
 // ---------- render ----------
 let sortK='date',sortAsc=false;
 function render(){
   const F=filtered();
-  // karty
-  const woj=countBy(F,'woj');
-  const cities=countBy(F,'city');
+  const woj=countBy(F,'woj'), cities=countBy(F,'city');
   const topWoj=Object.entries(woj).sort((a,b)=>b[1]-a[1])[0];
   const topCity=Object.entries(cities).sort((a,b)=>b[1]-a[1])[0];
-  const uniqNames=new Set(F.map(p=>p.surname.toLowerCase())).size;
-  const hiCount=F.filter(p=>HI.includes(p.woj)).length;
-  const hiPct=F.length?Math.round(hiCount/F.length*100):0;
-  $('cards').innerHTML=[
-    ['Przejęcia (stanowiska)',F.length],
-    ['Ogłoszenia',new Set(F.map(p=>p.url)).size],
-    ['Unikalne nazwiska',uniqNames],
-    ['Województw aktywnych',Object.keys(woj).length+'<small>/16</small>'],
-    ['Najwięcej (woj.)',topWoj?`${topWoj[1]}<small> ${topWoj[0]}</small>`:'—'],
-    ['Top miasto',topCity?`${topCity[1]}<small> ${topCity[0]}</small>`:'—'],
-  ].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')
-   +`<div class="card hot"><div class="k">Udział ★ łódzkie + mazowieckie</div><div class="v">${hiPct}%<small> (${hiCount})</small></div></div>`;
 
-  // analiza czestotliwosci
+  // ogloszenia + czestotliwosc
   const annMap={}; F.forEach(p=>{(annMap[p.url]=annMap[p.url]||{date:p.date,c:0}).c++;});
-  const anns=Object.values(annMap);
-  const annCount=anns.length;
+  const anns=Object.values(annMap), annCount=anns.length;
   const counts=anns.map(a=>a.c).sort((a,b)=>a-b);
   const med=counts.length?(counts.length%2?counts[(counts.length-1)/2]:((counts[counts.length/2-1]+counts[counts.length/2])/2)):0;
   const avgPos=annCount?F.length/annCount:0;
   const dts=[...new Set(anns.map(a=>a.date))].sort();
   let interval='—',perMonth='—';
   if(dts.length>=2){
-    const spanDays=Math.round((new Date(dts[dts.length-1])-new Date(dts[0]))/86400000);
-    interval='co '+(spanDays/(dts.length-1)).toFixed(0)+' dni';
-    perMonth=(F.length/Math.max(1,spanDays/30.44)).toFixed(1);
+    const span=Math.round((new Date(dts[dts.length-1])-new Date(dts[0]))/86400000);
+    interval='co '+(span/(dts.length-1)).toFixed(0)+' dni';
+    perMonth=(F.length/Math.max(1,span/30.44)).toFixed(1);
   }
-  $('freq').innerHTML=[
-    ['Ogłoszeń w wyborze',annCount],
-    ['Stanowisk razem',F.length],
+  const hiCount=F.filter(p=>HI.includes(p.woj)).length;
+  const hiPct=F.length?Math.round(hiCount/F.length*100):0;
+
+  // KPI (5)
+  $('kpi').innerHTML=[
+    ['Przejęcia (stanowiska)',F.length],
+    ['Ogłoszenia',annCount],
     ['Śr. stanowisk / ogłoszenie',avgPos.toFixed(1)],
-    ['Mediana stanowisk / ogł.',med],
     ['Średnio publikowano',interval],
-    ['Tempo',perMonth+'<small> stan./mies.</small>'],
-  ].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  ].map(([k,v])=>`<div class="c"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')
+   +`<div class="c gold"><div class="k">★ łódzkie + mazowieckie</div><div class="v">${hiCount}<small> z ${F.length} · ${hiPct}%</small></div></div>`;
 
-  // wg roku
-  const byYear=Object.entries(countBy(F,'year')).sort();
-  barChart($('chYear'),byYear);
+  // statline (trendy)
+  $('statline').innerHTML=
+    `Mediana stanowisk/ogł.: <b>${med}</b>`+
+    ` · Tempo: <b>${perMonth}</b> stan./mies.`+
+    (topWoj?` · Najwięcej: <b>${topWoj[0]}</b> (${topWoj[1]})`:'')+
+    (topCity?` · Top miasto: <b>${topCity[0]}</b> (${topCity[1]})`:'')+
+    ` · Województw: <b>${Object.keys(woj).length}/16</b>`;
 
-  // wg miesiąca
-  const ySel=$('fYear').value;
-  if(ySel){
-    const mm=countBy(F,p=>p.date.slice(5,7));
-    const ent=[];for(let i=1;i<=12;i++){const k=String(i).padStart(2,'0');ent.push([MIES[i],mm[k]||0]);}
-    barChart($('chMonth'),ent); $('monthHint').textContent='— rok '+ySel;
-  }else{
-    // agregat: suma wg miesiąca kalendarzowego (wszystkie lata)
-    const mm=countBy(F,p=>p.date.slice(5,7));
-    const ent=[];for(let i=1;i<=12;i++){const k=String(i).padStart(2,'0');ent.push([MIES[i],mm[k]||0]);}
-    barChart($('chMonth'),ent); $('monthHint').textContent='— wszystkie lata razem';
-  }
+  // mapa + ranking
+  renderMap(woj);
+  barChart($('chWoj'),Object.entries(woj).sort((a,b)=>b[1]-a[1]),{hot:HI});
 
-  // ranking woj
-  const wojEnt=Object.entries(woj).sort((a,b)=>b[1]-a[1]);
-  barChart($('chWoj'),wojEnt,{hot:HI});
-
-  // mapa
-  const maxW=Math.max(1,...Object.values(woj));
-  $('map').innerHTML=Object.entries(TILES).map(([w,[c,r]])=>{
-    const n=woj[w]||0; const inten=n/maxW;
-    const bg=HI.includes(w)
-      ? `rgba(245,158,11,${0.15+inten*0.7})`
-      : `rgba(79,140,255,${0.10+inten*0.75})`;
-    const selW=$('fWoj').value.replace(' ★','');
-    return `<div class="tile ${HI.includes(w)?'hi':''} ${selW===w?'sel':''}" data-w="${w}" style="grid-column:${c};grid-row:${r};background:${bg}">`+
-      `<div class="tn">${w}</div><div class="tc">${n}</div></div>`;
-  }).join('');
-  document.querySelectorAll('.tile').forEach(t=>t.onclick=()=>{
-    const w=t.dataset.w; const cur=$('fWoj').value.replace(' ★','');
-    $('fWoj').value=(cur===w)?'':(w+(HI.includes(w)?' ★':'')); render();
-  });
-
-  // top miasta
+  // trendy
+  barChart($('chYear'),Object.entries(countBy(F,'year')).sort());
+  const mm=countBy(F,p=>p.date.slice(5,7)); const ent=[];
+  for(let i=1;i<=12;i++){ent.push([MIES[i],mm[String(i).padStart(2,'0')]||0]);}
+  barChart($('chMonth'),ent);
+  $('monthHint').textContent=$('fYear').value?('— rok '+$('fYear').value):'— wszystkie lata razem';
   barChart($('chCity'),Object.entries(cities).sort((a,b)=>b[1]-a[1]).slice(0,12));
-
-  // nazwiska
   barChart($('chName'),Object.entries(countBy(F,'surname')).sort((a,b)=>b[1]-a[1]).slice(0,12));
 
   // tabela
   const S=[...F].sort((a,b)=>{let x=a[sortK]||'',y=b[sortK]||'';return (x<y?-1:x>y?1:0)*(sortAsc?1:-1);});
   $('tbody').innerHTML=S.map(p=>{
-    const q=encodeURIComponent(`komornik sądowy ${p.surname} ${p.city}`);
     const maps=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`komornik ${p.surname} ${p.address?p.address+' ':''}${p.city}`)}`;
-    const goog=`https://www.google.com/search?q=${q}`;
+    const goog=`https://www.google.com/search?q=${encodeURIComponent(`komornik sądowy ${p.surname} ${p.city}`)}`;
     const kan=(p.kancelaria?`<b>nr ${esc(p.kancelaria)}</b>`:'')+(p.address?`<div class="pill">${esc(p.address)}</div>`:'');
-    return `<tr>`+
-      `<td>${p.date}</td><td><b>${esc(p.surname)}</b></td><td>${esc(p.city)}</td>`+
+    return `<tr><td>${p.date}</td><td><b>${esc(p.surname)}</b></td><td>${esc(p.city)}</td>`+
       `<td><span class="tag ${HI.includes(p.woj)?'hi':''}">${p.woj}${HI.includes(p.woj)?' ★':''}</span></td>`+
       `<td>${esc(p.court)}</td><td>${kan||'<span class="pill">—</span>'}</td>`+
-      `<td class="links"><a href="${maps}" target="_blank" rel="noopener" title="Google Maps + opinie">🗺️ Maps</a> <a href="${goog}" target="_blank" rel="noopener" title="Wyszukaj w Google">🔍 Google</a></td>`+
+      `<td class="links"><a href="${maps}" target="_blank" rel="noopener">🗺️ Maps</a><a href="${goog}" target="_blank" rel="noopener">🔍 Google</a></td>`+
       `<td><a href="${p.url}" target="_blank" rel="noopener">ogłoszenie ↗</a></td></tr>`;
   }).join('');
-  $('tblHint').textContent=`— ${F.length} pozycji · 🗺️/🔍 = wyszukiwarka na żywo (prawdziwe wizytówki/opinie)`;
-  $('foot').innerHTML=`Dane: <a href="${DATA.source}" target="_blank">gov.pl / Ministerstwo Sprawiedliwości</a> · zaktualizowano ${DATA.generated} · zakres ${DATA.range.from} – ${DATA.range.to}`;
+  $('tblHint').textContent=`— ${F.length} pozycji · 🗺️/🔍 = wyszukiwarka na żywo (prawdziwe wizytówki i opinie)`;
+  $('foot').innerHTML=`Dane: <a href="${DATA.source}" target="_blank" rel="noopener">gov.pl / Ministerstwo Sprawiedliwości</a> · ${DATA.range.from} – ${DATA.range.to} · zaktualizowano ${DATA.generated}`;
 }
-function esc(s){return (s||'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
-document.querySelectorAll('th[data-k]').forEach(th=>th.addEventListener('click',()=>{
-  const k=th.dataset.k; if(sortK===k)sortAsc=!sortAsc; else{sortK=k;sortAsc=(k!=='date');} render();
-}));
 </script>
 </body>
 </html>
