@@ -497,7 +497,6 @@ function renderInsights(F,X){
 function kpi(ic,lab,val,cls){return `<div class="kpi ${cls}"><div class="ic">${ic}</div><div class="lab">${lab}</div><div class="val">${val}</div></div>`;}
 
 /* wizytówka / modal */
-function gmKey(){return localStorage.getItem('gmapikey')||'';}
 function closeModal(){$('modal').hidden=true;$('mmap').src='about:blank';}
 $('mclose').onclick=closeModal;
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
@@ -515,22 +514,6 @@ function openCard(p){
   $('modal').hidden=false;
 }
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('.wbtn');if(b)openCard(TBL[+b.dataset.i]);});
-let _gm=null;
-function ensureMaps(){if(window.google&&google.maps&&google.maps.places)return Promise.resolve();
-  if(_gm)return _gm;_gm=new Promise((res,rej)=>{const s=document.createElement('script');
-    s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(gmKey())+'&libraries=places&language=pl';
-    s.onload=res;s.onerror=()=>rej(new Error('Nie udało się załadować Google Maps (klucz?).'));document.head.appendChild(s);});return _gm;}
-async function loadReviews(p){const rv=$('mrev');
-  try{await ensureMaps();const svc=new google.maps.places.PlacesService(document.createElement('div'));
-    svc.textSearch({query:'komornik sądowy '+p.surname+' '+p.city},(res,st)=>{
-      if(st!==google.maps.places.PlacesServiceStatus.OK||!res||!res.length){rv.innerHTML='<div class="note">Nie znaleziono wizytówki w Google.</div>';return;}
-      svc.getDetails({placeId:res[0].place_id,fields:['name','rating','user_ratings_total','reviews'],language:'pl'},(d,s2)=>{
-        if(s2!==google.maps.places.PlacesServiceStatus.OK||!d){rv.innerHTML='<div class="note">Brak szczegółów.</div>';return;}
-        let h='';if(d.rating){const f=Math.round(d.rating);h+=`<div style="margin-bottom:8px"><span class="stars">${'★'.repeat(f)}${'☆'.repeat(5-f)}</span> <b>${d.rating}</b> <span class="muted">(${d.user_ratings_total||0})</span></div>`;}
-        (d.reviews||[]).slice(0,3).forEach(r=>{h+=`<div class="rev"><div class="h"><span>${esc(r.author_name||'')}</span><span>★ ${r.rating}</span></div>${esc((r.text||'').slice(0,260))}</div>`;});
-        rv.innerHTML=h||'<div class="note">Wizytówka bez opinii.</div>';});});
-  }catch(e){rv.innerHTML='<div class="note">Błąd: '+esc(String(e.message||e))+'</div>';}
-}
 $('logout').onclick=()=>{localStorage.removeItem('kpw');location.reload();};
 
 /* w pobliżu */
