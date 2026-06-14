@@ -94,6 +94,10 @@
   svg#map text{pointer-events:none;font-weight:700;paint-order:stroke;stroke:#0b0f1a;stroke-width:3.4px;fill:#fff}
   svg#map text{stroke-width:4px}
   svg#map text.nm{font-size:17px} svg#map text.ct{font-size:20px;fill:#eef4ff;font-weight:800}
+  svg#map circle.pin{fill:var(--gold);stroke:#0b0f1a;cursor:pointer}
+  svg#map circle.pin:hover{fill:#fff}
+  #mapReset{position:absolute;top:48px;right:18px;z-index:3;background:var(--panel2);border:1px solid var(--acc);
+    color:var(--txt);padding:8px 13px;border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:var(--sh)}
   svg#map text.hi{fill:var(--gold)}
   .legend{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;margin-top:12px;flex-wrap:wrap}
   .legend .sw{height:10px;width:34px;border-radius:3px}
@@ -201,7 +205,8 @@
     <section data-tab="mapa">
       <div class="maprow">
         <div class="panel mapwrap">
-          <h3>🗺️ Przejęcia wg apelacji <span class="hint">— kliknij obszar, by filtrować</span></h3>
+          <h3>🗺️ Przejęcia wg apelacji <span class="hint">— kliknij apelację, by przybliżyć i zobaczyć kancelarie</span></h3>
+          <button id="mapReset" hidden>← cała Polska</button>
           <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
           <div class="legend">
             <span>mniej</span>
@@ -290,8 +295,8 @@
   </div>
 </div>
 
-<script src="map.js?v=4"></script>
-<script src="payload.js?v=4"></script>
+<script src="map.js?v=5"></script>
+<script src="payload.js?v=5"></script>
 <script>
 function b64(b){const s=atob(b),a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a;}
 async function deriveKey(pw,salt,iter){const e=new TextEncoder();
@@ -372,19 +377,41 @@ function bars(el,entries,{hot=[]}={}){
   }).join('')||'<div class="muted">brak danych</div>';
 }
 
-function renderMap(byApel){
-  const svg=$('map');svg.setAttribute('viewBox',MAP_VIEWBOX);
+const PR=(typeof MAP_PROJ!=='undefined')?MAP_PROJ:null;
+function projX(lon){return (lon*PR.kx-PR.minx)*PR.scale+PR.pad;}
+function projY(lat){return (PR.maxy-lat)*PR.scale+PR.pad;}
+let MAPPOS=[];
+function renderMap(byApel,F){
+  const svg=$('map');
   const max=Math.max(1,...Object.values(byApel));
   const sel=curApelFromDropdown();
+  const zoom=sel&&typeof APEL_BBOX!=='undefined'&&APEL_BBOX[sel];
   let h='';
   POW_PATHS.forEach(p=>{const n=byApel[p.apel]||0,t=n/max;
     h+=`<path d="${p.d}" data-apel="${p.apel}" fill="${scaleColor(t)}" class="${sel===p.apel?'sel':''}"><title>${apName(p.apel)}: ${n}</title></path>`;});
-  for(const [a,c] of Object.entries(APEL_CENTROIDS)){const n=byApel[a]||0,hi=HI.includes(a);
-    h+=`<text class="nm ${hi?'hi':''}" x="${c[0]}" y="${c[1]-6}">${cap(a)}${hi?' ★':''}</text>`+
-       `<text class="ct ${hi?'hi':''}" x="${c[0]}" y="${c[1]+17}">${n}</text>`;}
+  if(!zoom){ // etykiety apelacji tylko w widoku całej Polski
+    svg.setAttribute('viewBox',MAP_VIEWBOX);
+    for(const [a,c] of Object.entries(APEL_CENTROIDS)){const n=byApel[a]||0,hi=HI.includes(a);
+      h+=`<text class="nm ${hi?'hi':''}" x="${c[0]}" y="${c[1]-6}">${cap(a)}${hi?' ★':''}</text>`+
+         `<text class="ct ${hi?'hi':''}" x="${c[0]}" y="${c[1]+17}">${n}</text>`;}
+  } else { // ZOOM do apelacji + pinezki kancelarii
+    const bb=APEL_BBOX[sel],pf=(bb[2]-bb[0])*0.08;
+    const vbx=bb[0]-pf,vby=bb[1]-pf,vbw=(bb[2]-bb[0])+2*pf,vbh=(bb[3]-bb[1])+2*pf;
+    svg.setAttribute('viewBox',`${vbx} ${vby} ${vbw} ${vbh}`);
+    const r=Math.max(2.5,Math.min(8,vbw*0.014));
+    MAPPOS=F; const cc={};
+    (F||[]).forEach((p,i)=>{const g=(DATA.cityGeo||{})[p.city];if(!g||!PR)return;
+      const k=cc[p.city]||0;cc[p.city]=k+1;
+      const ang=k*2.39996,rad=k?r*1.25*Math.sqrt(k):0;
+      const px=projX(g[1])+Math.cos(ang)*rad,py=projY(g[0])+Math.sin(ang)*rad;
+      h+=`<circle class="pin" data-i="${i}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" stroke-width="${(r*0.3).toFixed(2)}"><title>${esc(p.surname)} — ${esc(p.city)}${p.address?' · '+esc(p.address):''}</title></circle>`;
+    });
+  }
   svg.innerHTML=h;
+  $('mapReset').hidden=!zoom;
   svg.querySelectorAll('path').forEach(pa=>pa.onclick=()=>{const a=pa.dataset.apel;
     $('fApel').value=(sel===a)?'':(apName(a)+(HI.includes(a)?' ★':''));render();});
+  svg.querySelectorAll('circle.pin').forEach(c=>c.onclick=e=>{e.stopPropagation();openCard(MAPPOS[+c.dataset.i]);});
 }
 
 let sortK='date',sortAsc=false;
@@ -415,7 +442,7 @@ function render(){
     (topApel?` · Najwięcej: <b>${apName(topApel[0])}</b> (${topApel[1]})`:'')+
     (topCity?` · Top miasto: <b>${topCity[0]}</b> (${topCity[1]})`:'')+` · Apelacji: <b>${Object.keys(byApel).length}/11</b>`;
 
-  renderMap(byApel);
+  renderMap(byApel,F);
   const rk=Object.entries(byApel).map(([a,n])=>[a,n]).sort((x,y)=>y[1]-x[1]);
   $('rApel').innerHTML=rk.map(([a,n])=>{const hi=HI.includes(a),max=rk[0][1];
     return `<div class="bar ${hi?'hi':''}" data-apel="${a}"><div class="lab">${cap(a)}</div>`+
@@ -515,6 +542,7 @@ function openCard(p){
 }
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('.wbtn');if(b)openCard(TBL[+b.dataset.i]);});
 $('logout').onclick=()=>{localStorage.removeItem('kpw');location.reload();};
+$('mapReset').onclick=()=>{$('fApel').value='';render();};
 
 /* w pobliżu */
 function haversine(a,b){const R=6371,dLat=(b[0]-a[0])*Math.PI/180,dLon=(b[1]-a[1])*Math.PI/180,
