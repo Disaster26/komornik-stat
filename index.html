@@ -98,6 +98,16 @@
   svg#map circle.pin:hover{fill:#fff}
   #mapReset{position:absolute;top:48px;right:18px;z-index:3;background:var(--panel2);border:1px solid var(--acc);
     color:var(--txt);padding:8px 13px;border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:var(--sh)}
+  .pintip{position:absolute;z-index:5;pointer-events:none;transform:translate(-50%,-100%) translateY(-12px);
+    background:#0f1525;border:1px solid var(--acc);border-radius:11px;padding:9px 12px;min-width:130px;max-width:230px;
+    box-shadow:var(--sh);font-size:12.5px;line-height:1.4}
+  .pintip b{font-size:14px;color:#fff}
+  .pintip .ti{color:var(--muted);margin-top:2px}
+  .pintip .th{color:var(--acc2);margin-top:6px;font-size:11px;font-weight:600}
+  .pintip::after{content:'';position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);
+    border:8px solid transparent;border-top-color:var(--acc)}
+  .pintip::before{content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+    border:7px solid transparent;border-top-color:#0f1525;z-index:1}
   svg#map text.hi{fill:var(--gold)}
   .legend{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;margin-top:12px;flex-wrap:wrap}
   .legend .sw{height:10px;width:34px;border-radius:3px}
@@ -208,6 +218,7 @@
           <h3>🗺️ Przejęcia wg apelacji <span class="hint">— kliknij apelację, by przybliżyć i zobaczyć kancelarie</span></h3>
           <button id="mapReset" hidden>← cała Polska</button>
           <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div id="pinTip" class="pintip" hidden></div>
           <div class="legend">
             <span>mniej</span>
             <span class="sw" style="background:rgba(108,140,255,.18)"></span>
@@ -404,15 +415,33 @@ function renderMap(byApel,F){
       const k=cc[p.city]||0;cc[p.city]=k+1;
       const ang=k*2.39996,rad=k?r*1.25*Math.sqrt(k):0;
       const px=projX(g[1])+Math.cos(ang)*rad,py=projY(g[0])+Math.sin(ang)*rad;
-      h+=`<circle class="pin" data-i="${i}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" stroke-width="${(r*0.3).toFixed(2)}"><title>${esc(p.surname)} — ${esc(p.city)}${p.address?' · '+esc(p.address):''}</title></circle>`;
+      h+=`<circle class="pin" data-i="${i}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" stroke-width="${(r*0.3).toFixed(2)}"></circle>`;
     });
   }
   svg.innerHTML=h;
   $('mapReset').hidden=!zoom;
   svg.querySelectorAll('path').forEach(pa=>pa.onclick=()=>{const a=pa.dataset.apel;
     $('fApel').value=(sel===a)?'':(apName(a)+(HI.includes(a)?' ★':''));render();});
-  svg.querySelectorAll('circle.pin').forEach(c=>c.onclick=e=>{e.stopPropagation();openCard(MAPPOS[+c.dataset.i]);});
+  svg.querySelectorAll('circle.pin').forEach(c=>{
+    c.onclick=e=>{e.stopPropagation();openCard(MAPPOS[+c.dataset.i]);};
+    c.onmouseenter=()=>showTip(c,MAPPOS[+c.dataset.i]);
+    c.onmouseleave=hideTip;
+  });
 }
+function showTip(c,p){
+  if(!p)return;
+  const tip=$('pinTip'),wrap=$('map').parentElement;
+  const cr=c.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
+  tip.innerHTML=`<b>Komornik ${esc(p.surname)}</b>`+
+    `<div class="ti">📍 ${esc(p.city)}${p.kancelaria?' · Kancelaria nr '+esc(p.kancelaria):''}</div>`+
+    (p.address?`<div class="ti">${esc(p.address)}</div>`:'')+
+    `<div class="ti">${apName(p.apel)} · ${p.date}</div>`+
+    `<div class="th">kliknij → wizytówka Google</div>`;
+  tip.hidden=false;
+  tip.style.left=(cr.left-wr.left+cr.width/2)+'px';
+  tip.style.top=(cr.top-wr.top)+'px';
+}
+function hideTip(){$('pinTip').hidden=true;}
 
 let sortK='date',sortAsc=false;
 function render(){
